@@ -19,7 +19,7 @@ const deploy = async () => {
     console.log(">> deploy: copied `./shared`")
 
     const options = {
-      files: ["pages/*", "pages/*/*"],
+      files: ["server.ts", "pages/*", "pages/*/*"],
       from: /\.\.\/shared/g,
       to: "shared"
     }
@@ -34,7 +34,7 @@ const deploy = async () => {
       await git.addRemote("homepage", "git@github.com:Altruisto/homepage.git")
       console.log(">> deploy: remote 'homepage' added")
     }
-    console.log(`>> deploy: running 'git push homepage ${branch}'`)
+    console.log(`>> deploy: pushing new branch to the repo`)
     shellExec(`cd .. && git subtree push --prefix=website homepage ${branch} && cd website`)
       .then(x => {
         console.log(`>> deploy: branch pushed`)

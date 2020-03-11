@@ -7,7 +7,24 @@ import simpleGit from "simple-git/promise"
 import shellExec from "shell-exec"
 
 const git = simpleGit()
-const time = Date.now()
+const getDate = () => {
+  const t = Date.now()
+  const d = new Date(t)
+  const result =
+    d.getDate() +
+    "_" +
+    (d.getMonth() + 1) +
+    "_" +
+    d.getFullYear() +
+    "_" +
+    (d.getHours() > 12 ? d.getHours() - 12 : d.getHours()) +
+    "_" +
+    d.getMinutes() +
+    "_" +
+    (d.getHours() >= 12 ? "PM" : "AM")
+  return result
+}
+const time = getDate()
 const branch = `deploy-${time}`
 
 const deploy = async () => {
@@ -21,7 +38,7 @@ const deploy = async () => {
     const options = {
       files: ["server.ts", "pages/*", "pages/*/*"],
       from: /\.\.\/shared/g,
-      to: "shared"
+      to: "./shared"
     }
     const results = await replace(options)
     console.log(">> deploy: replacement results:", results)
@@ -38,7 +55,6 @@ const deploy = async () => {
     shellExec(`cd .. && git subtree push --prefix=website homepage ${branch} && cd website`)
       .then(x => {
         console.log(`>> deploy: branch pushed`)
-        console.log(x)
       })
       .catch(console.log)
   })

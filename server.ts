@@ -1,5 +1,6 @@
-import express from "express"
+import express, { Request, Response, NextFunction } from "express"
 import next from "next"
+import compression from "compression"
 import useragent from "express-useragent"
 import cookieParser from "cookie-parser"
 import querystring from "querystring"
@@ -17,17 +18,31 @@ const handle = app.getRequestHandler()
 
 const server = express()
 
-server.use(cookieParser())
-server.use((req, res, next) => {
+const saveRefCookie = (req: Request, res: Response, next: NextFunction) => {
   if (!req.cookies[REFERRED_BY_COOKIE_NAME] && req.query["ref"]) {
     res.cookie(REFERRED_BY_COOKIE_NAME, req.query["ref"], {
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     })
   }
   next()
-})
+}
+const requireHTTPS = (req: Request, res: Response, next: NextFunction) => {
+  // The 'x-forwarded-proto' check is for Heroku
+  if (
+    !req.secure &&
+    req.get("x-forwarded-proto") !== "https" &&
+    process.env.NODE_ENV !== "development"
+  ) {
+    return res.redirect("https://" + req.get("host") + req.url)
+  }
+  next()
+}
 
-server.use(express.static("public"))
+server.use(cookieParser())
+server.use(saveRefCookie)
+server.use(requireHTTPS)
+
+server.use(express.static("public", { maxAge: "30 days" }))
 server.use(express.static(CUSTOM_PAGES_OUTPUT_DIRECTORY))
 server.use(express.static(NEXT_PAGES_OUTPUT_DIRECTORY_NAME))
 

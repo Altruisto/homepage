@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from "react"
+import { useState, useEffect } from "react"
 import { NextPage } from "next"
 import Link from "next/link"
 import { isMobile } from "react-device-detect"
@@ -61,12 +61,12 @@ const PartnersIndex: NextPage<Props> = ({ partners }) => {
               {columns.map(partnersInColumn => (
                 <div className="col-6 col-md-4">
                   {partnersInColumn.map(partner => (
-                    <Fragment key={partner.domain}>
-                      <Link href={"/partners/" + partner.domain}>
+                    <>
+                      <Link href={"/partners/" + partner.domain} key={partner.domain}>
                         <a>{partner.name}</a>
                       </Link>
                       <br />
-                    </Fragment>
+                    </>
                   ))}
                 </div>
               ))}

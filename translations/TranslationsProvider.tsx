@@ -6,23 +6,31 @@ import { pl } from "./strings/pl"
 const getMessages = (language: string) => {
   // because Safari uses notation pl-pl, I used regex test instead of checking hardcoded string
   if (/^en\b/.test(language)) {
-    return en;
+    return en
   } else if (/^pl\b/.test(language)) {
-    return pl;
+    return pl
   }
-  return en;
+  return en
+}
+
+const getLanguage = () => {
+  // server side rendering should use "en" as default
+  if (typeof window === "undefined") {
+    return "en"
+  }
+  let language = localStorage.getItem("lang")
+  if (!language) {
+    language = navigator.language
+    localStorage.setItem("lang", language)
+  }
+  return language
 }
 
 const TranslationsProvider: FunctionComponent<any> = ({ children }) => {
-  // logic for storing language preference in localStorage or recognizing browser's language ()
-
-  const language = navigator.language;
+  const language = getLanguage()
 
   return (
-    <IntlProvider 
-      locale={language || 'en'} 
-      messages={getMessages(language)}
-    >
+    <IntlProvider locale={language} messages={getMessages(language)}>
       {children}
     </IntlProvider>
   )

@@ -65,7 +65,7 @@ const Ukraine = () => {
       <main className="ukraine">
         <div
           className="ukraine__banner"
-          style={{ backgroundImage: "url(/images/ukraine-banner.png)" }}
+          style={{ backgroundImage: "url(/images/ukraine-banner-2.jpg)" }}
         >
           <div className="ukraine__banner-content">
             <div className="ukraine__flag">

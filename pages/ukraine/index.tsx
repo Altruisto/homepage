@@ -61,11 +61,37 @@ const Ukraine = () => {
   }, [])
 
   return (
-    <StandardLayout withMenu={true} withoutMenuBorder={true}>
+    <StandardLayout
+      withMenu={true}
+      withoutMenuBorder={true}
+      seoMetaTags={{
+        title: "Let's help the victims of war in Ukraine",
+        description:
+          "The conflict in Ukraine means unimaginable suffering for thousands of innocent people. Although we do not have the power to stop the war, we can act and help how we know best. To give to those in need and who have been affected by this tragedy."
+      }}
+      ogMetaTags={{
+        title: "Let's help the victims of war in Ukraine",
+        description:
+          "The conflict in Ukraine means unimaginable suffering for thousands of innocent people. Although we do not have the power to stop the war, we can act and help how we know best. To give to those in need and who have been affected by this tragedy.",
+        image: "https://altruisto.com/images/ukraine-cover-1.jpg",
+        url: "https://altruisto.com/ukraine"
+      }}
+      twitterMetaTags={{
+        title: "Let's help the victims of war in Ukraine",
+        site: "@altruistoCom",
+        description:
+          "The conflict in Ukraine means unimaginable suffering for thousands of innocent people. Although we do not have the power to stop the war, we can act and help how we know best. To give to those in need and who have been affected by this tragedy.",
+        image: "https://altruisto.com/images/ukraine-cover-1.jpg",
+        card: "summary_large_image"
+      }}
+    >
       <main className="ukraine">
         <div
           className="ukraine__banner"
-          style={{ backgroundImage: "url(/images/ukraine-banner.png)" }}
+          style={{
+            backgroundImage:
+              "url(/images/ukraine-baner-2.jpg), linear-gradient(rgba(0,0,0,0.2),rgba(0,0,0,0.2))"
+          }}
         >
           <div className="ukraine__banner-content">
             <div className="ukraine__flag">
@@ -244,7 +270,7 @@ const DonateGiveAways = () => {
   return (
     <div className="ukraine__products row">
       {GIVEAWAYS.map((giveaway) => (
-        <div className="col-4" key={giveaway.name}>
+        <div className="col-6 col-md-4" key={giveaway.name}>
           <div className="ukraine__product ">
             <img src={giveaway.logo} alt={giveaway.name} className="ukraine__product-logo" />
             <p className="ukraine__product-name">{giveaway.name}</p>

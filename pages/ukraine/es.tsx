@@ -1,35 +1,98 @@
-import React, { FC, useEffect, useMemo, useState } from "react"
-import { StandardLayout } from "../../components/layouts"
-import { loadStripe } from "@stripe/stripe-js"
-import dynamic from "next/dynamic"
 import { InputAdornment, Modal, OutlinedInput, TextField, useMediaQuery } from "@material-ui/core"
-import navigatorLanguages from "navigator-languages"
+import { loadStripe } from "@stripe/stripe-js"
+import { GIVEAWAYS } from "data/ukraineGiveaways"
 import * as localeCurrency from "locale-currency"
-import { api2 } from "utils/api-url"
+import navigatorLanguages from "navigator-languages"
+import dynamic from "next/dynamic"
+import React, { FC, useEffect, useMemo, useState } from "react"
 import { useIntl } from "translations/useIntl"
-import { FormattedNumber } from "react-intl"
+import { api2, getStripeApiKey } from "utils/api-url"
+import { StandardLayout } from "../../components/layouts"
+import ShareModal from "../../components/partials/ShareModal"
+import {
+  Donation,
+  DonationEventData,
+  subscribeToDonationsEvent
+} from "../../utils/events-api/subscribeToDonationsEvent"
 
 const ProgressBar = dynamic(() => import("../../components/ui/ProgressBar"), {
   ssr: false
 })
 
 const Ukraine = () => {
-  const [isOpen, setIsOpen] = useState(false)
   const isMd = useMediaQuery("(min-width: 768px)")
+
+  const [isDonateModalOpen, setIsDonateModalOpen] = useState(false)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
 
   const userLocale = useMemo(() => navigatorLanguages() || ["en"], [])
   const userCurrency = useMemo(() => localeCurrency.getCurrency(userLocale[0]) || "USD", [
     userLocale
   ])
 
-  const { formatNumber } = useIntl()
+  const [donations, setDonations] = useState<DonationEventData>({
+    raised: {
+      current: 0,
+      goal: 5000,
+      currency: userCurrency,
+      donorsCount: 0
+    },
+    mostRecentDonations: []
+  })
+
+  const getUrlToShare = () => {
+    if (typeof window === "undefined") {
+      return ""
+    }
+    return window.location.href
+  }
+
+  // useEffect(() => {
+  //   async function handleDonationsSubscription() {
+  //     await subscribeToDonationsEvent(userCurrency, setDonations)
+  //   }
+  //   handleDonationsSubscription()
+  // }, [userCurrency])
+
+  useEffect(() => {
+    api2.get("/direct-donation/ukraine").then(({ data }) => {
+      setDonations(data)
+    })
+  }, [])
 
   return (
-    <StandardLayout withMenu={false} withoutMenuBorder={false} noCta={true}>
+    <StandardLayout
+      withMenu={true}
+      withoutMenuBorder={true}
+      seoMetaTags={{
+        title: "¡Ayudemos a Ucrania juntos!",
+        description:
+          "El conflicto en Ucrania supone un sufrimiento inimaginable para miles de personas inocentes. Aunque nosotros no tengamos el poder para detener la guerra, igualmente podemos actuar y ayudar, proporcionando nuestra asistencia a los necesitados y a quienes se han visto afectados por esta tragedia. "
+      }}
+      ogMetaTags={{
+        title: "¡Ayudemos a Ucrania juntos!",
+        description:
+          "El conflicto en Ucrania supone un sufrimiento inimaginable para miles de personas inocentes. Aunque nosotros no tengamos el poder para detener la guerra, igualmente podemos actuar y ayudar, proporcionando nuestra asistencia a los necesitados y a quienes se han visto afectados por esta tragedia. ",
+        image: "https://altruisto.com/images/ukraine-cover-es.png",
+        url: "https://altruisto.com/ukraine/es"
+      }}
+      twitterMetaTags={{
+        title: "¡Ayudemos a Ucrania juntos!",
+        site: "@altruistoCom",
+        description:
+          "El conflicto en Ucrania supone un sufrimiento inimaginable para miles de personas inocentes. Aunque nosotros no tengamos el poder para detener la guerra, igualmente podemos actuar y ayudar, proporcionando nuestra asistencia a los necesitados y a quienes se han visto afectados por esta tragedia.",
+        image: "https://altruisto.com/images/ukraine-cover-es.png",
+        card: "summary_large_image"
+      }}
+    >
       <main className="ukraine">
         <div
           className="ukraine__banner"
-          style={{ backgroundImage: "url(/images/ukraine-banner.png)" }}
+          style={{
+            backgroundImage:
+              "url(/images/ukraine-baner-3.jpg), linear-gradient(rgba(0,0,0,0.2),rgba(0,0,0,0.2))",
+            backgroundPosition: "50% 30%"
+          }}
         >
           <div className="ukraine__banner-content">
             <div className="ukraine__flag">
@@ -38,7 +101,7 @@ const Ukraine = () => {
             </div>
             <h2>Ayuda humanitaria para las víctimas de la guerra en Ucrania</h2>
             <p>
-              Organizador de la campaña de recaudación de fondos:{" "}
+              Recepción de fondos:{" "}
               <a href="https://www.pah.org.pl/en/">
                 <u>Polish Humanitarian Action</u>
               </a>
@@ -76,7 +139,7 @@ const Ukraine = () => {
               predecir lo que sucederá en los próximos días, pero los pronósticos no son optimistas
               y las personas necesitan ayuda inmediata.
             </p>
-            <p style={{ margin: 0 }}>
+            <p>
               Esta campaña de recaudación de fondos se crea para recaudar dinero en modalidad de
               Fondo de ayuda a las víctimas de la guerra. El alcance de la asistencia dependerá de
               cómo se desarrolle del conflicto en Ucrania, por lo que se irá ajustando en función de
@@ -88,45 +151,84 @@ const Ukraine = () => {
               sobre los próximos pasos a dar.
             </p>
 
-            <p style={{ margin: 0 }}>
-              Gracias a todos aquellos que no son indiferentes ante el sufrimiento de los demás.
+            <p>
+              Gracias a todos aquellos que no son indiferentes ante el sufrimiento de los demás.{" "}
             </p>
 
             <p style={{ margin: 0 }}>¡Ayudemos a Ucrania juntos!</p>
+
+            <hr />
+            <p>
+              Estamos comprometidos con transparencia total, vean los recibos de transferencias{" "}
+              <a href="/ukraine/receipts" target="_blank">
+                <u>aquí.</u>
+              </a>{" "}
+            </p>
+            <hr />
+
+            <strong>
+              Las siguientes empresas decidieron regalar sus productos de forma gratuita a todos los
+              que donen:
+            </strong>
+            <DonateGiveAways />
+            <p style={{ marginTop: 12 }}>
+              ¿Quiere regalar también su producto? Póngase en{" "}
+              <a href="mailto:luiza@altruisto.com">
+                <u>contacto con nosotros.</u>
+              </a>
+            </p>
+            <hr />
           </div>
           <div className="ukraine__right-panel">
             <div className="ukraine__donate">
               <div className="ukraine__donate--container">
-                <p className="ukraine__donate--text">
-                  <span className="ukraine__donate--current">
-                    {formatNumber(500, { style: "currency", currency: userCurrency })}
-                  </span>{" "}
-                  raised
-                  <br />
-                  of{" "}
-                  <strong>
-                    {formatNumber(5000, { style: "currency", currency: userCurrency })}
-                  </strong>{" "}
-                  goal
-                </p>
-                <ProgressBar value={89} variant="determinate" />
-                <div className="ukraine__donate--supporters">
-                  <img src="/images/family.svg" alt="family logo" />
-                  <span>Supported by 20 people</span>
-                </div>
-                <button className="button" onClick={() => setIsOpen(true)}>
-                  Donate
+                <DonateInfo
+                  current={donations.raised.current / 100}
+                  goal={donations.raised.goal / 100}
+                  donorsCount={donations.raised.donorsCount}
+                />
+                <button className="button" onClick={() => setIsDonateModalOpen(true)}>
+                  Donar
                 </button>
-                <button className="button button--gray ukraine__share-button">
+                <button
+                  className="button button--gray ukraine__share-button"
+                  onClick={() => setIsShareModalOpen(true)}
+                >
                   <img src="/images/share.svg" alt="Share icon" />
-                  Share
+                  Compartir
                 </button>
                 <div className="ukraine__donate--supporters">
-                  * The number is approximated based on today's currency exchange rates
+                  * El número se aproxima en función de los tipos de cambio actuales
+                  <br />
+                  ** Estamos comprometidos con transparencia total, vean los recibos de
+                  transferencias{" "}
+                  <a href="/ukraine/receipts" target="_blank">
+                    <u>aquí</u>
+                  </a>
                 </div>
               </div>
             </div>
-            {isMd && <DonationList />}
+            {isMd && <DonationList mostRecentDonations={donations.mostRecentDonations} />}
+            {/* <div className="ukraine__donate" style={{ marginTop: 20 }}>
+              <div
+                className="ukraine__donate--container"
+                style={{ paddingTop: 16, paddingBottom: 16 }}
+              >
+                The following companies decided to giveaway their products for free to anyone who
+                donates:
+              </div>
+              {GIVEAWAYS.map(({ name, logo, perk }) => (
+                <div className="ukraine__donate-list--item">
+                  <img src={logo} alt="Altruisto logotype" title="Altruisto" />
+                  <div className="ukraine__donate-list--item--name">
+                    <span>
+                      <strong>{name}</strong>
+                    </span>
+                    <span>{perk}</span>
+                  </div>
+                </div>
+              ))}
+            </div> */}
           </div>
         </div>
         <img
@@ -134,7 +236,7 @@ const Ukraine = () => {
           style={{ width: "100%", height: "100%", padding: "40px 0" }}
         />
         <div className="ukraine__centered-content">
-          {!isMd && <DonationList />}
+          {!isMd && <DonationList mostRecentDonations={donations.mostRecentDonations} />}
           <div className="ukraine__left-panel">
             <div className="ukraine__article-image-container">
               <img
@@ -153,12 +255,44 @@ const Ukraine = () => {
         </div>
       </main>
       <DonateModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        isOpen={isDonateModalOpen}
+        onClose={() => setIsDonateModalOpen(false)}
         currency={userCurrency}
         locale={userLocale}
       />
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        url={getUrlToShare()}
+      />
     </StandardLayout>
+  )
+}
+
+const DonateGiveAways = () => {
+  return (
+    <div className="ukraine__products row">
+      {GIVEAWAYS.map((giveaway) => (
+        <div className="col-6 col-md-4" key={giveaway.name}>
+          <div className="ukraine__product ">
+            <img src={giveaway.logo} alt={giveaway.name} className="ukraine__product-logo" />
+            <p className="ukraine__product-name">{giveaway.name}</p>
+            <div style={{ width: "100%" }}>
+              <p className="ukraine__product-perk">{giveaway.perk}</p>
+              <div className="ukraine__product-description">
+                <p>{giveaway.description}</p>
+
+                <p className="ukraine__product-website">
+                  <a href={giveaway.website} target="_blank">
+                    Visit Website
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -212,14 +346,59 @@ const DonateModal: FC<DonateModalProps> = ({ isOpen, onClose, currency, locale }
       return
     }
     try {
-      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+      const stripe = await loadStripe(getStripeApiKey())
+      const supportedLocale = [
+        "bg",
+        "cs",
+        "da",
+        "de",
+        "el",
+        "en",
+        "en-GB",
+        "es",
+        "es-419",
+        "et",
+        "fi",
+        "fil",
+        "fr",
+        "fr-CA",
+        "hr",
+        "hu",
+        "id",
+        "it",
+        "ja",
+        "ko",
+        "lt",
+        "lv",
+        "ms",
+        "mt",
+        "nb",
+        "nl",
+        "pl",
+        "pt",
+        "pt-BR",
+        "ro",
+        "ru",
+        "sk",
+        "sl",
+        "sv",
+        "th",
+        "tr",
+        "vi",
+        "zh",
+        "zh-HK"
+      ]
+      const usersLocale = locale[0]
+
+      const targetLocale = supportedLocale.includes(usersLocale) ? usersLocale : "en"
+
       const response = await api2.post("/direct-donation", {
         amount: Math.round((typeof amount === "string" ? parseInt(amount) : amount) * 100),
         fundraiser: "Donation for Polish Humanitarian Action",
         subPath: "ukraine",
         donor: name,
-        currency,
-        locale
+        currency: "NOK",
+        locale: targetLocale
       })
       await stripe.redirectToCheckout({
         sessionId: response.data
@@ -237,28 +416,9 @@ const DonateModal: FC<DonateModalProps> = ({ isOpen, onClose, currency, locale }
   }
   return (
     <Modal open={isOpen} onClose={onClose}>
-      <div
-        style={{
-          maxWidth: "424px",
-          width: "100%",
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          padding: "20px"
-        }}
-      >
+      <div className="modal-content">
         <div style={{ background: "white", position: "relative" }}>
-          <button
-            onClick={onClose}
-            style={{
-              position: "absolute",
-              right: "16px",
-              top: "16px",
-              border: "none",
-              background: "transparent"
-            }}
-          >
+          <button onClick={onClose} className="modal-content__close-button">
             <img src="/images/close.svg" alt="Cross icon" />
           </button>
           <div
@@ -274,7 +434,7 @@ const DonateModal: FC<DonateModalProps> = ({ isOpen, onClose, currency, locale }
                 marginBottom: "24px"
               }}
             >
-              Select amount
+              Seleccione el monto de la donación
             </h2>
             <div style={{ display: "flex", marginBottom: "12px" }}>
               <button
@@ -302,7 +462,7 @@ const DonateModal: FC<DonateModalProps> = ({ isOpen, onClose, currency, locale }
               </button>
             </div>
             <label htmlFor="amount" style={{ marginBottom: "8px" }}>
-              Amount
+              Monto de donación
             </label>
             <TextField
               variant="outlined"
@@ -319,10 +479,10 @@ const DonateModal: FC<DonateModalProps> = ({ isOpen, onClose, currency, locale }
               helperText={errorMsg}
             />
             <label htmlFor="name" style={{ marginTop: "12px", marginBottom: "8px" }}>
-              Your name (leave blank if you want your donation to be anonymous)
+              Su nombre (opcional)
             </label>
             <OutlinedInput
-              placeholder="Your name..."
+              placeholder="Su nombre..."
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -334,7 +494,7 @@ const DonateModal: FC<DonateModalProps> = ({ isOpen, onClose, currency, locale }
               style={{ marginTop: "32px" }}
               onClick={handleDonation}
             >
-              {isLoading ? "Submitting..." : "Donate"}
+              {isLoading ? "Procesando..." : "Donar"}
             </button>
           </div>
         </div>
@@ -343,24 +503,66 @@ const DonateModal: FC<DonateModalProps> = ({ isOpen, onClose, currency, locale }
   )
 }
 
-const DonationList = () => {
+const DonationList = ({ mostRecentDonations }: { mostRecentDonations: Donation[] }) => {
+  const { formatNumber } = useIntl()
+
   return (
     <div className="ukraine__donate-list">
       <div className="ukraine__donate-list--container">
-        <p className="ukraine__donate-list--title">Donations:</p>
-        {[...Array(5).keys()].map((key) => (
-          <div key={key} className="ukraine__donate-list--item">
+        <p className="ukraine__donate-list--title">Donaciones:</p>
+        {mostRecentDonations.map((donation, index) => (
+          <div className="ukraine__donate-list--item">
             <img src="/images/sygnet.svg" alt="Altruisto logotype" title="Altruisto" />
             <div className="ukraine__donate-list--item--name">
-              <span>Matka Teresa</span>
+              <span>{donation.donor || "Anonymous"}</span>
               <span>
-                <strong>$60</strong>
+                <strong>
+                  {formatNumber(donation.amount / 100, {
+                    style: "currency",
+                    currency: donation.currency
+                  })}
+                </strong>
               </span>
             </div>
           </div>
         ))}
       </div>
     </div>
+  )
+}
+
+const DonateInfo = ({ current, goal, donorsCount }) => {
+  const { formatNumber } = useIntl()
+  const userLocale = useMemo(() => navigatorLanguages() || ["en"], [])
+  const userCurrency = useMemo(() => localeCurrency.getCurrency(userLocale[0]) || "USD", [
+    userLocale
+  ])
+
+  return (
+    <>
+      <p className="ukraine__donate--text">
+        <span className="ukraine__donate--current">
+          {formatNumber(current, {
+            style: "currency",
+            currency: "usd"
+          })}
+        </span>{" "}
+        recaudados
+        <br />
+        de un objetivo de{" "}
+        <strong>
+          {formatNumber(goal, {
+            style: "currency",
+            currency: "usd"
+          })}
+        </strong>{" "}
+      </p>
+      <ProgressBar value={(100 * current) / goal} variant="determinate" />
+      <div className="ukraine__donate--supporters">
+        <img src="/images/family.svg" alt="family logo" />
+        <span>Apoyado por {donorsCount} personas</span>
+      </div>
+    </>
   )
 }
 

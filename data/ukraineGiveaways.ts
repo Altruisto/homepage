@@ -25,7 +25,7 @@ export const GIVEAWAYS = [
     perk: "Free access",
     description:
       "Personalized workout and nutrition plans supported by real human coaches, comprehensive progress tracking, and cognitive therapy practice-based tips. Created by a team from 🇺🇦",
-    claimInstructions: `Please make sure that you have a registered account in the BetterMe Health Coaching app with the email address you used on the payment page before clicking "claim". It may takes up to a few hours for your account to be upgraded.`
+    claimInstructions: `Please make sure that you have a registered account in the BetterMe Health Coaching app with the email address you used on the payment page before clicking "claim". It may takes up to a few hours for your account to be upgraded. Please make sure to reopen the app to check if the entitlement is granted.`
   },
   {
     name: "BetterMe Mental Health",
@@ -34,14 +34,31 @@ export const GIVEAWAYS = [
     perk: "Free access",
     description:
       "Simple meditations and guided courses for mental well-being. Created by a team from 🇺🇦",
-    claimInstructions: `Please make sure that you have a registered account in the BetterMe Mental Health app with the email address you used on the payment page before clicking "claim". It may takes up to a few hours for your account to be upgraded.`
+    claimInstructions: `Please make sure that you have a registered account in the BetterMe Mental Health app with the email address you used on the payment page before clicking "claim". It may takes up to a few hours for your account to be upgraded. Please make sure to reopen the app to check if the entitlement is granted.`
   },
   {
-    name: "Bear App",
+    name: "Bear App (iOS)",
     website: "https://bear.app",
     logo: "/images/fundraiser/bearapp.jpeg",
-    perk: "1 year of Bear Pro (only 50 spots)",
+    perk: "1 year of Bear Pro (only 25 spots)",
     description: "Bear is a beautiful, flexible writing app for crafting notes and prose.",
+    claimInstructions: "You will receive a promo code you can use in the app."
+  },
+  {
+    name: "Bear App (Mac)",
+    website: "https://bear.app",
+    logo: "/images/fundraiser/bearapp.jpeg",
+    perk: "1 year of Bear Pro (only 25 spots)",
+    description: "Bear is a beautiful, flexible writing app for crafting notes and prose.",
+    claimInstructions: "You will receive a promo code you can use in the app."
+  },
+  {
+    name: "ABA English",
+    website: "https://www.abaenglish.com/",
+    logo: "/images/fundraiser/abaenglish.png",
+    perk: "Free access for 1 year",
+    description:
+      "Recognized as one of the best English language learning apps in the world. Take your English to the next level.",
     claimInstructions: "You will receive a promo code you can use in the app."
   }
 ] as const

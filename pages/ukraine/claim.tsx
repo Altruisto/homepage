@@ -79,9 +79,22 @@ const Claim = () => {
     }
   }
 
-  const claimPromoCode = async (name: "Bear App") => {
+  const claimPromoCode = async (
+    name:
+      | "Bear App (iOS)"
+      | "Bear App (Mac)"
+      | "Pixitca"
+      | "Focus - Time Management for iOS"
+      | "Attentive - Screen Time Control for iOS"
+      | "Filter - App & Website Blocker for Mac"
+  ) => {
     const map = {
-      "Bear App": "bear"
+      "Bear App (iOS)": "bearIOS",
+      "Bear App (Mac)": "bearMac",
+      Pixitca: "pixitca",
+      "Focus - Time Management for iOS": "focus",
+      "Attentive - Screen Time Control for iOS": "attentive",
+      "Filter - App & Website Blocker for Mac": "filter"
     }
     try {
       const result = await api2.post("/direct-donation/claim/promo-code", {
@@ -89,6 +102,20 @@ const Claim = () => {
         claimType: map[name]
       })
       setCurrentPromoCode(result.data)
+    } catch (e) {
+      e.response.data.errors.forEach((error) => {
+        handleError(error.type, enqueueSnackbar)
+      })
+    }
+  }
+
+  const claimAbaEnglish = async () => {
+    try {
+      const result = await api2.post("/direct-donation/claim/promo-code", {
+        token: router.query.token,
+        claimType: "abaEnglish"
+      })
+      router.push("/ukraine/aba-instructions?code=" + result.data)
     } catch (e) {
       e.response.data.errors.forEach((error) => {
         handleError(error.type, enqueueSnackbar)
@@ -107,9 +134,17 @@ const Claim = () => {
         claimBetterMe(name)
         break
 
-      case "Bear App":
+      case "Bear App (iOS)":
+      case "Bear App (Mac)":
+      case "Pixitca":
+      case "Focus - Time Management for iOS":
+      case "Attentive - Screen Time Control for iOS":
+      case "Filter - App & Website Blocker for Mac":
         claimPromoCode(name)
         break
+
+      case "ABA English":
+        claimAbaEnglish()
     }
   }
 

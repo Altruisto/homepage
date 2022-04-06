@@ -1,13 +1,15 @@
 import { StandardLayout } from "../../components/layouts"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/router"
 import "../../lib/canvas-confetti/confetti"
-import { GIVEAWAYS } from "data/ukraineGiveaways"
+import { GIVEAWAYS, POLISH_GIVEAWAYS } from "data/ukraineGiveaways"
 import { api2 } from "utils/api-url"
 import { useSnackbar } from "notistack"
 import { Modal } from "@material-ui/core"
+import { useIntl } from "translations/useIntl"
+import navigatorLanguages from "navigator-languages"
 
-type GiveAwayName = typeof GIVEAWAYS[number]["name"]
+type GiveAwayName = typeof GIVEAWAYS[number]["name"] | typeof POLISH_GIVEAWAYS[number]["name"]
 
 const handleError = (
   type: string,
@@ -44,6 +46,10 @@ const Claim = () => {
   const router = useRouter()
   const { enqueueSnackbar } = useSnackbar()
   const [currentPromoCode, setCurrentPromoCode] = useState<string>("")
+  const [currentTextInstructions, setCurrentTextInstructions] = useState<string>("")
+
+  const { formatMessage } = useIntl()
+  const userLocale = useMemo(() => navigatorLanguages() || ["en"], [])
 
   const claimUnum = async () => {
     try {
@@ -79,9 +85,38 @@ const Claim = () => {
     }
   }
 
-  const claimPromoCode = async (name: "Bear App") => {
+  const claimPromoCode = async (
+    name:
+      | "Bear App (iOS)"
+      | "Bear App (Mac)"
+      | "Pixitca"
+      | "Focus - Time Management for iOS"
+      | "Attentive - Screen Time Control for iOS"
+      | "Filter - App & Website Blocker for Mac"
+      | "Wczesnoszkolni.pl"
+      | "Concepts (iOS)"
+      | "OurFlat (iOS)"
+      | "OurFlat (Android)"
+      | "Food List Tracking & Shopping"
+      | "Stock and Inventory Simple"
+      | "Taskito"
+      | "Bazaart"
+  ) => {
     const map = {
-      "Bear App": "bear"
+      "Bear App (iOS)": "bearIOS",
+      "Bear App (Mac)": "bearMac",
+      Pixitca: "pixitca",
+      "Focus - Time Management for iOS": "focus",
+      "Attentive - Screen Time Control for iOS": "attentive",
+      "Filter - App & Website Blocker for Mac": "filter",
+      "Wczesnoszkolni.pl": "wczesnoszkolni",
+      "Concepts (only iOS app)": "concepts",
+      "OurFlat (iOS)": "ourFlatIOS",
+      "OurFlat (Android)": "ourFlatAndroid",
+      "Food List Tracking & Shopping": "foodList",
+      "Stock and Inventory Simple": "stock",
+      Taskito: "taskito",
+      Bazaart: "bazaart"
     }
     try {
       const result = await api2.post("/direct-donation/claim/promo-code", {
@@ -96,6 +131,58 @@ const Claim = () => {
     }
   }
 
+  const claimAbaEnglish = async () => {
+    try {
+      const result = await api2.post("/direct-donation/claim/promo-code", {
+        token: router.query.token,
+        claimType: "abaEnglish"
+      })
+      router.push("/ukraine/aba-instructions?code=" + result.data)
+    } catch (e) {
+      e.response.data.errors.forEach((error) => {
+        handleError(error.type, enqueueSnackbar)
+      })
+    }
+  }
+
+  const claimUTalk = async () => {
+    try {
+      const result = await api2.post("/direct-donation/claim/promo-code", {
+        token: router.query.token,
+        claimType: "utalk"
+      })
+      router.push("/ukraine/utalk-instructions?code=" + result.data)
+    } catch (e) {
+      e.response.data.errors.forEach((error) => {
+        handleError(error.type, enqueueSnackbar)
+      })
+    }
+  }
+
+  const claimMyTasksApp = async () => {
+    try {
+      await api2.post("/direct-donation/claim/mytasksapp", {
+        token: router.query.token
+      })
+      enqueueSnackbar(
+        "You are now able to upgrade to premium account for free. Please read the instructions.",
+        {
+          variant: "success"
+        }
+      )
+    } catch (e) {
+      e.response.data.errors.forEach((error) => {
+        handleError(error.type, enqueueSnackbar)
+      })
+    }
+  }
+
+  const claimMindspa = () => {
+    setCurrentTextInstructions(
+      "Please download th app and use the contact form in the app to request the free PTSD programme."
+    )
+  }
+
   const claim = (name: GiveAwayName) => {
     switch (name) {
       case "UNUM":
@@ -107,8 +194,37 @@ const Claim = () => {
         claimBetterMe(name)
         break
 
-      case "Bear App":
+      case "Bear App (iOS)":
+      case "Bear App (Mac)":
+      case "Pixitca":
+      case "Focus - Time Management for iOS":
+      case "Attentive - Screen Time Control for iOS":
+      case "Filter - App & Website Blocker for Mac":
+      case "Wczesnoszkolni.pl":
+      case "Concepts (iOS)":
+      case "OurFlat (iOS)":
+      case "OurFlat (Android)":
+      case "Food List Tracking & Shopping":
+      case "Stock and Inventory Simple":
+      case "Taskito":
+      case "Bazaart":
         claimPromoCode(name)
+        break
+
+      case "ABA English":
+        claimAbaEnglish()
+        break
+
+      case "My Tasks App":
+        claimMyTasksApp()
+        break
+
+      case "Mindspa":
+        claimMindspa()
+        break
+
+      case "uTalk":
+        claimUTalk()
         break
     }
   }
@@ -119,23 +235,40 @@ const Claim = () => {
         <div className="ukraine__centered-content ukraine__overlap-content">
           <div className="ukraine__info">
             <div className="">
-              <h2>Your giveaways:</h2>
+              <h2>{formatMessage({ id: "yourGiveaways" })}:</h2>
             </div>
+            {userLocale.includes("pl") &&
+              POLISH_GIVEAWAYS.map((giveaway) => (
+                <div key={giveaway.name}>
+                  <strong>{giveaway.name}</strong>
+                  <p>{giveaway.claimInstructions}</p>
+                  <button className="button button--gray" onClick={() => claim(giveaway.name)}>
+                    {formatMessage({ id: "claim" })}
+                  </button>
+                  <hr />
+                </div>
+              ))}
+
             {GIVEAWAYS.map((giveaway) => (
               <div key={giveaway.name}>
                 <strong>{giveaway.name}</strong>
                 <p>{giveaway.claimInstructions}</p>
                 <button className="button button--gray" onClick={() => claim(giveaway.name)}>
-                  Claim
+                  {formatMessage({ id: "claim" })}
                 </button>
                 <hr />
               </div>
             ))}
+            <hr />
             <div className=""></div>
           </div>
         </div>
       </main>
       <PromoCodeModal promoCode={currentPromoCode} onClose={() => setCurrentPromoCode("")} />
+      <TextInstructionsModal
+        text={currentTextInstructions}
+        onClose={() => setCurrentTextInstructions("")}
+      />
     </StandardLayout>
   )
 }
@@ -146,6 +279,7 @@ type PromoCodeModalProps = {
 }
 
 const PromoCodeModal = ({ onClose, promoCode }: PromoCodeModalProps) => {
+  const { formatMessage } = useIntl()
   return (
     <Modal open={!!promoCode} onClose={onClose}>
       <div className="modal-content">
@@ -160,8 +294,31 @@ const PromoCodeModal = ({ onClose, promoCode }: PromoCodeModalProps) => {
               flexDirection: "column"
             }}
           >
-            <h2>Your promo code</h2>
+            <h2>{formatMessage({ id: "yourPromoCode" })}</h2>
             <input type="text" value={promoCode} readOnly />
+          </div>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+const TextInstructionsModal = ({ onClose, text }: { onClose: () => void; text: string }) => {
+  return (
+    <Modal open={!!text} onClose={onClose}>
+      <div className="modal-content">
+        <div style={{ background: "white", position: "relative" }}>
+          <button onClick={onClose} className="modal-content__close-button">
+            <img src="/images/close.svg" alt="Cross icon" />
+          </button>
+          <div
+            style={{
+              padding: "40px",
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            <p>{text}</p>
           </div>
         </div>
       </div>
